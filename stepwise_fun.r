@@ -70,6 +70,11 @@ sheet_extract <- function(col, var, googlesheet) {
 }
 
 stepwise_recode <- function(x, var, googlesheet) {
+  if (all(is.na(sheet_extract("oldvar", var, googlesheet)))) {
+    warning(paste(var, "is not in the dictionary."))
+    return(x)
+  }
+
   type <- sheet_extract("type", var, googlesheet) %>%
     unique()
 
@@ -79,6 +84,12 @@ stepwise_recode <- function(x, var, googlesheet) {
 
   # Similar reason as above - `NA` might be problematic in conditional
   # evaluation.
+
+  # notin <- colnames(stepwise)[which(!colnames(stepwise) %in% sheet[["oldvar"]])]
+  # if (var %in% notin) {
+  #   type <- "NA"
+  # }
+
   if (is.na(type)) {
     type <- "NA"
   }
@@ -91,6 +102,11 @@ stepwise_recode <- function(x, var, googlesheet) {
     levels[is.na(levels)] <- "NA"
     labels <- sheet_extract("labels", var, googlesheet)
 
+    if (all(is.na(levels))) {
+      levels <- levels[1]
+      warning(paste(var, "has no values."))
+    }
+
     if (length(unique(levels)) != length(levels)) {
       stop(paste(var, "does not have distinct levels.\n"))
     }
@@ -102,13 +118,13 @@ stepwise_recode <- function(x, var, googlesheet) {
     x[x == ""] <- "NA"
 
     if (all(!is.na(sheet_extract("min", var, googlesheet)))) {
-       min <-  unique(as.numeric(sheet_extract("min", var, googlesheet)))
-       x[x < min] <- NA
+      min <- unique(as.numeric(sheet_extract("min", var, googlesheet)))
+      x[x < min] <- NA
     }
 
     if (all(!is.na(sheet_extract("max", var, googlesheet)))) {
-       max <-  unique(as.numeric(sheet_extract("max", var, googlesheet)))
-       x[x > max] <- NA
+      max <- unique(as.numeric(sheet_extract("max", var, googlesheet)))
+      x[x > max] <- NA
     }
 
     if (all(is.na(labels))) {
@@ -143,7 +159,6 @@ stepwise_recode <- function(x, var, googlesheet) {
 
     x[x == "NA"] <- NA
     x <- factor(x)
-
   } else if (type == "Numeric/Continuous") {
 
     # If there are no "Min" or "Max" in the dictionary

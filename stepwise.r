@@ -24,7 +24,6 @@ test_nonames(sheet, stepwise)
 # Clean data
 # Recode and applying limits
 stepwise_clean <- stepwise_recode_df(stepwise, sheet)
-
 # Which variables are factors?
 which_factor <- which(map_lgl(stepwise_clean, is.factor))
 
@@ -46,4 +45,3 @@ sex_plot(stepwise_clean, sex = "sex")
 
 # Export data
 save(stepwise_clean, file = "./stepwise_clean.Rdata")
-
