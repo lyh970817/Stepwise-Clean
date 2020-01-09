@@ -19,12 +19,12 @@ test_nonames <- function(sheet, data) {
 
   # get value positions in "variable.swedish" that are in the colnames
   # of the data frame and that have corresponding "variable.english"
-  eng_avai_pos <- (sheet[["variable.swedish"]] %in% colnames(data)) & !is.na(sheet[["variable.english"]])
+  eng_avai_pos <- (sheet[["oldvar"]] %in% colnames(data)) & !is.na(sheet[["newvar"]])
 
   # Take the whole columns of "variable.swedish" and "variable.english"
   # based on defined positions
-  swe_name <- sheet[["variable.swedish"]][eng_avai_pos]
-  eng_name <- sheet[["variable.english"]][eng_avai_pos]
+  swe_name <- sheet[["oldvar"]][eng_avai_pos]
+  eng_name <- sheet[["newvar"]][eng_avai_pos]
 
   # For each "variable.swedish", find how many corresponding
   # "variable.english" there are.
@@ -62,21 +62,19 @@ test_nonames <- function(sheet, data) {
 
 sheet_extract <- function(col, var, googlesheet) {
   # Extract values for a specified variable from a specified column
-  return(googlesheet[[col]][googlesheet[["variable.swedish"]] == var &
-    !is.na(googlesheet[["variable.swedish"]])])
+  return(googlesheet[[col]][googlesheet[["oldvar"]] == var &
+    !is.na(googlesheet[["oldvar"]])])
   # Careful that `!is.na` is needed for the `==` not to evaluate to
   # `NA`, which is to be treated as subsetting indices and could lead to
   # unexpected behaviour? (that I'm actually not very sure of).
 }
 
 stepwise_recode <- function(x, var, googlesheet) {
-  type <- sheet_extract("Type", var, googlesheet) %>%
+  type <- sheet_extract("type", var, googlesheet) %>%
     unique()
 
   if (length(type) > 1) {
     stop(paste(var, "has more than one type :", type, "\n"))
-  } else if (length(type) == 0) {
-    stop(paste(var, "has no type\n"))
   }
 
   # Similar reason as above - `NA` might be problematic in conditional
@@ -91,7 +89,7 @@ stepwise_recode <- function(x, var, googlesheet) {
     # coded to NA by R. Here it's code to a character string "NA" to
     # make assigning factor levels and labels easier.
     levels[is.na(levels)] <- "NA"
-    labels <- sheet_extract("labels.english", var, googlesheet)
+    labels <- sheet_extract("labels", var, googlesheet)
 
     if (length(unique(levels)) != length(levels)) {
       stop(paste(var, "does not have distinct levels.\n"))
@@ -103,13 +101,13 @@ stepwise_recode <- function(x, var, googlesheet) {
 
     x[x == ""] <- "NA"
 
-    if (all(!is.na(sheet_extract("Min", var, googlesheet)))) {
-       min <-  unique(as.numeric(sheet_extract("Min", var, googlesheet)))
+    if (all(!is.na(sheet_extract("min", var, googlesheet)))) {
+       min <-  unique(as.numeric(sheet_extract("min", var, googlesheet)))
        x[x < min] <- NA
     }
 
-    if (all(!is.na(sheet_extract("Max", var, googlesheet)))) {
-       max <-  unique(as.numeric(sheet_extract("Max", var, googlesheet)))
+    if (all(!is.na(sheet_extract("max", var, googlesheet)))) {
+       max <-  unique(as.numeric(sheet_extract("max", var, googlesheet)))
        x[x > max] <- NA
     }
 
@@ -154,7 +152,7 @@ stepwise_recode <- function(x, var, googlesheet) {
     # if the limits are from the data itself).
     min <- tryCatch(
       expr = {
-        unique(as.numeric(sheet_extract("Min", var, googlesheet)))
+        unique(as.numeric(sheet_extract("min", var, googlesheet)))
       },
       error = function(e) {
         min(x)
@@ -162,7 +160,7 @@ stepwise_recode <- function(x, var, googlesheet) {
     )
     max <- tryCatch(
       expr = {
-        unique(as.numeric(sheet_extract("Max", var, googlesheet)))
+        unique(as.numeric(sheet_extract("max", var, googlesheet)))
       },
       error = function(e) {
         max(x)
@@ -182,8 +180,8 @@ stepwise_recode <- function(x, var, googlesheet) {
 }
 
 stepwise_rename <- function(data, googlesheet) {
-  swe_name <- googlesheet[["variable.swedish"]]
-  eng_name <- googlesheet[["variable.english"]]
+  swe_name <- googlesheet[["oldvar"]]
+  eng_name <- googlesheet[["newvar"]]
   item_pos <- (swe_name %in% colnames(data)) & (!is.na(eng_name))
 
   oldnames <- swe_name[item_pos] %>% unique()
