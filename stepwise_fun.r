@@ -91,6 +91,7 @@ stepwise_recode <- function(x, var, googlesheet) {
   # }
 
   if (is.na(type)) {
+    warning(paste(var, "has no type info."))
     type <- "NA"
   }
 

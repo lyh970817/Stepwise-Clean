@@ -22,10 +22,14 @@ sheet <- stepwise_sheet("Stepwise_variables") %>%
 test_nonames(sheet, stepwise)
 
 # Clean data
+
 # Recode and applying limits
 stepwise_clean <- stepwise_recode_df(stepwise, sheet)
+
 # Which variables are factors?
 which_factor <- which(map_lgl(stepwise_clean, is.factor))
+
+sheet_extract("type", "avslut_2b2", sheet)
 
 # Create numeric version variable names
 numeric_names <- paste0(names(which_factor), ".numeric")
