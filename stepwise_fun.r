@@ -98,7 +98,7 @@ stepwise_recode <- function(x, var, googlesheet) {
   if (type == "Categorical") {
     levels <- sheet_extract("values", var, googlesheet)
     # Some "values" in the googlesheet are left blank and will be
-    # coded to NA by R. Here it's code to a character string "NA" to
+    # coded to NA by R. Here it's to code a character string "NA" to
     # make assigning factor levels and labels easier.
     levels[is.na(levels)] <- "NA"
     labels <- sheet_extract("labels", var, googlesheet)
@@ -118,16 +118,8 @@ stepwise_recode <- function(x, var, googlesheet) {
 
     x[x == ""] <- "NA"
 
-    if (all(!is.na(sheet_extract("min", var, googlesheet)))) {
-      min <- unique(as.numeric(sheet_extract("min", var, googlesheet)))
-      x[x < min] <- NA
-    }
-
-    if (all(!is.na(sheet_extract("max", var, googlesheet)))) {
-      max <- unique(as.numeric(sheet_extract("max", var, googlesheet)))
-      x[x > max] <- NA
-    }
-
+    # Implement a check to see if there are levels in the data but no in
+    # dict
     if (all(is.na(labels))) {
       x <- tryCatch(
         expr = {
@@ -159,7 +151,7 @@ stepwise_recode <- function(x, var, googlesheet) {
     }
 
     x[x == "NA"] <- NA
-    x <- factor(x)
+    x <- factor(x, levels = levels, labels = labels)
   } else if (type == "Numeric/Continuous") {
 
     # If there are no "Min" or "Max" in the dictionary
