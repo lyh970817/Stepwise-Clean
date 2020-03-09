@@ -4,6 +4,11 @@ source("./stepwise_density.r")
 source("./stepwise_discrete.r")
 load("./stepwise.RData")
 
+stepwise <- read_sav("~/Downloads/Trauma3_Main_Data_anonymized.sav")
+
+# Need to run the below line to avoid errors
+stepwise <- stepwise %>% select(-c("kön", "ålder1", "ed1"))
+
 # Read googlesheet
 sheet <- stepwise_sheet("Stepwise_variables") %>%
   rename(

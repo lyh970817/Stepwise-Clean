@@ -97,15 +97,14 @@ stepwise_recode <- function(x, var, googlesheet) {
 
   if (type == "Categorical") {
     levels <- sheet_extract("values", var, googlesheet)
-    # Some "values" in the googlesheet are left blank and will be
-    # coded to NA by R. Here it's to code a character string "NA" to
-    # make assigning factor levels and labels easier.
-    levels[is.na(levels)] <- "NA"
     labels <- sheet_extract("labels", var, googlesheet)
 
     if (all(is.na(levels))) {
-      levels <- levels[1]
       warning(paste(var, "has no values."))
+      if (var == "Kodning_AB") {
+        browser()
+      }
+      return(x)
     }
 
     if (length(unique(levels)) != length(levels)) {
@@ -116,11 +115,12 @@ stepwise_recode <- function(x, var, googlesheet) {
     # "NA" to ensure we have a correct map between data values and
     # levels.
 
-    x[x == ""] <- "NA"
 
     # Implement a check to see if there are levels in the data but no in
     # dict
     if (all(is.na(labels))) {
+      where <- which(!is.na(levels) & levels != "NA")
+      levels <- levels[where]
       x <- tryCatch(
         expr = {
           factor(x, levels = levels)
@@ -128,13 +128,20 @@ stepwise_recode <- function(x, var, googlesheet) {
         error = function(e) {
           msg <- paste0(
             "Error occurs at ", var,
-            ", with levels: ", levels, "\n"
+            ", with levels: "
           )
           print(msg)
-          stop(x)
+          print(levels)
+          browser()
         }
       )
+      x[x == "NA"] <- NA
+      levels <- levels[levels != "NA"]
+      x <- factor(x, levels = levels)
     } else {
+      where <- which(!is.na(levels) & !is.na(labels) & levels != "NA" & labels != "NA")
+      labels <- labels[where]
+      levels <- levels[where]
       x <- tryCatch(
         expr = {
           factor(x, levels = levels, labels = labels)
@@ -145,13 +152,13 @@ stepwise_recode <- function(x, var, googlesheet) {
             ", with levels: ", paste(levels, collapse = ", "),
             ", and labels: ", paste(labels, collapse = ", "), "\n"
           )
-          stop(msg)
+          pairs <- paste(levels, ":", labels)
+          print(msg)
+          print(pairs)
+          browser()
         }
       )
     }
-
-    x[x == "NA"] <- NA
-    x <- factor(x, levels = levels, labels = labels)
   } else if (type == "Numeric/Continuous") {
 
     # If there are no "Min" or "Max" in the dictionary
